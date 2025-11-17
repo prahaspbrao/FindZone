@@ -60,7 +60,7 @@ export default function WelcomePage() {
                 shadow-md
               "
             >
-              Parent.NIE
+              Parent NIE
             </a>
 
             {/* Visit College Button */}

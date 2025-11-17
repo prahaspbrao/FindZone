@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { User2, Tag, FileText, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 
 export default function ReportFound() {
+  const router = useRouter();
   const [usn, setUsn] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -13,39 +16,45 @@ export default function ReportFound() {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
+  e.preventDefault();
+  setError("");
+  setSuccess("");
 
-    if (!usn.trim() || !name.trim() || !description.trim()) {
-      setError("Please fill in all fields");
-      return;
+  if (!usn.trim() || !name.trim() || !description.trim()) {
+    setError("Please fill in all fields");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const res = await fetch("/api/report-found", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usn: usn.toUpperCase(), name, description }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || "Failed to report item");
+    } else {
+      setSuccess("Found item reported successfully!");
+      setUsn("");
+      setName("");
+      setDescription("");
+
+      // ⭐ Redirect to dashboard
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1000);
     }
+  } catch {
+    setError("Unexpected server error. Try again.");
+  }
 
-    setLoading(true);
+  setLoading(false);
+};
 
-    try {
-      const res = await fetch("/api/report-found", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usn: usn.toUpperCase(), name, description }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Failed to report item");
-      } else {
-        setSuccess("Found item reported successfully!");
-        setUsn("");
-        setName("");
-        setDescription("");
-      }
-    } catch {
-      setError("Unexpected server error. Try again.");
-    }
-
-    setLoading(false);
-  };
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
