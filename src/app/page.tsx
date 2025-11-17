@@ -133,7 +133,7 @@ export default function WelcomePage() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 1.2 }}
         >
-          NIE Asset Recovery Portal
+          Find Zone
         </motion.h1>
 
         <motion.p
@@ -171,7 +171,7 @@ export default function WelcomePage() {
 
       {/* Footer */}
       <footer className="absolute bottom-3 sm:bottom-4 text-gray-500 text-xs sm:text-sm">
-        © {new Date().getFullYear()} College Lost & Found • DBMS Project
+        © {new Date().getFullYear()} Find Zone • Minor Project
       </footer>
     </div>
   );

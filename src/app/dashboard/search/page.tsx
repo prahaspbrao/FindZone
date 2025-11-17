@@ -129,7 +129,7 @@ export default function SearchItemsPage() {
         <div className="leading-tight select-none">
           <h2 className="text-xl sm:text-2xl font-extrabold bg-gradient-to-r 
             from-indigo-300 to-purple-300 bg-clip-text text-transparent">
-            NIE Campus Recovery Portal
+            NIE Find Zone
           </h2>
           <p className="text-slate-300 text-xs sm:text-sm">
             The National Institute of Engineering, Mysuru
