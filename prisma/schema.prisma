@@ -12,37 +12,37 @@ enum ItemType {
   FOUND
 }
 
-
 model User {
-  id      Int    @id @default(autoincrement())
-  usn     String @unique
-  dob     String
-  email   String
-  name    String   // ✅ Add this field
-  items   Item[]
+  id    Int    @id @default(autoincrement())
+  usn   String @unique
+  dob   String
+  email String
+  name  String // ✅ Add this field
+  items Item[]
 }
-
 
 model Item {
-  id          Int       @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
   description String
-  isReturned  Boolean   @default(false)
-  reportedAt  DateTime  @default(now())
+  isReturned  Boolean  @default(false)
+  reportedAt  DateTime @default(now())
   userId      Int
-  user        User      @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
   type        ItemType
-  imageUrl    String?   // 🆕 Add this line
+  imageUrl    String?
+
+  // ⭐ ADD THIS
+  otps Otp[] @relation("ItemOtps")
 }
-
-
-
 
 model Otp {
   id        Int      @id @default(autoincrement())
   email     String
   code      String
   expiresAt DateTime
+  used      Boolean  @default(false)
+
+  itemId Int
+  item   Item @relation("ItemOtps", fields: [itemId], references: [id])
 }
-
-
