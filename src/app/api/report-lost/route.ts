@@ -1,40 +1,50 @@
 // app/api/report-lost/route.ts
-import { NextResponse } from 'next/server';
-import prisma from '../../../../lib/db'; // or import { PrismaClient } from '@prisma/client'; const prisma = new PrismaClient();
+import { NextResponse } from "next/server";
+import prisma from "../../../../lib/db";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   try {
-    const { usn, name, description } = await req.json();
+    const cookieStore = await cookies();
 
-    if (!usn || !name || !description) {
+    const loggedInUserId = Number(cookieStore.get("userId")?.value);
+    const loggedInUSN = cookieStore.get("usn")?.value;
+
+    if (!loggedInUserId || !loggedInUSN) {
       return NextResponse.json(
-        { error: 'USN, name, and description are required' },
+        { error: "Unauthorized user" },
+        { status: 401 }
+      );
+    }
+
+    const { name, description } = await req.json();
+
+    if (!name || !description) {
+      return NextResponse.json(
+        { error: "Name and description are required" },
         { status: 400 }
       );
     }
 
-    const normalizedUsn = usn.toUpperCase();
-
-    const user = await prisma.user.findUnique({
-      where: { usn: normalizedUsn },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
+    // Create lost item using logged-in user's ID
     await prisma.item.create({
       data: {
         name,
         description,
-        type: 'LOST',
-        userId: user.id,
+        type: "LOST",
+        userId: loggedInUserId, // ⭐ logged-in user only
       },
     });
 
-    return NextResponse.json({ message: 'Lost item reported successfully' });
+    return NextResponse.json({
+      success: true,
+      message: "Lost item reported successfully!",
+    });
   } catch (error) {
-    console.error('Error reporting lost item:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("REPORT LOST ERROR:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

@@ -95,7 +95,7 @@ export default function SearchItemsPage() {
         onClick={() =>
           !disabled && handleVerifyAndReturn(item.id)
         }
-        className={`mt-4 w-full py-2 rounded-xl font-semibold flex items-center justify-center gap-2 transition
+        className={`cursor-pointer mt-4 w-full py-2 rounded-xl font-semibold flex items-center justify-center gap-2 transition
           ${disabled
             ? "bg-gray-700 cursor-not-allowed opacity-60"
             : isFound
@@ -128,7 +128,7 @@ export default function SearchItemsPage() {
       <header className="w-full px-6 sm:px-10 py-4 flex justify-between items-center bg-black/30 backdrop-blur-2xl border-b border-white/10 shadow-xl relative z-30">
         <button
           onClick={() => router.push("/dashboard")}
-          className="flex items-center gap-2 text-slate-300 hover:text-white transition"
+          className="flex items-center gap-2 text-slate-300 hover:text-white transition cursor-pointer"
         >
           <FiArrowLeft className="text-xl" />
           Back
@@ -172,7 +172,7 @@ export default function SearchItemsPage() {
         />
         <button
           onClick={handleSearch}
-          className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-semibold"
+          className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-semibold cursor-pointer"
         >
           Search
         </button>

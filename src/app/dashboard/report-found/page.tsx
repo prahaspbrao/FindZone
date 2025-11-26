@@ -1,70 +1,89 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { User2, Tag, FileText, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-
 export default function ReportFound() {
   const router = useRouter();
-  const [usn, setUsn] = useState("");
+
+  const [loggedInUSN, setLoggedInUSN] = useState("");
+  const [loggedInUserId, setLoggedInUserId] = useState<number | null>(null);
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ⭐ Fetch logged-in user on load
+  useEffect(() => {
+    fetch("/api/me")
+      .then((res) => res.json())
+      .then((data) => {
+        setLoggedInUSN(data.usn);
+        setLoggedInUserId(data.userId);
+      });
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError("");
-  setSuccess("");
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
-  if (!usn.trim() || !name.trim() || !description.trim()) {
-    setError("Please fill in all fields");
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const res = await fetch("/api/report-found", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ usn: usn.toUpperCase(), name, description }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error || "Failed to report item");
-    } else {
-      setSuccess("Found item reported successfully!");
-      setUsn("");
-      setName("");
-      setDescription("");
-
-      // ⭐ Redirect to dashboard
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1000);
+    if (!name.trim() || !description.trim()) {
+      setError("Please fill in all fields");
+      return;
     }
-  } catch {
-    setError("Unexpected server error. Try again.");
-  }
 
-  setLoading(false);
-};
+    if (!loggedInUserId) {
+      setError("User authentication error");
+      return;
+    }
 
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/report-found", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          description,
+          userId: loggedInUserId, // ⭐ ONLY logged-in user
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Failed to report item");
+      } else {
+        setSuccess("Found item reported successfully!");
+        setName("");
+        setDescription("");
+
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1000);
+      }
+    } catch {
+      setError("Unexpected server error. Try again.");
+    }
+
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-      
-      {/* Animated Background */}
+
       <motion.div
         className="absolute -top-32 -left-20 w-[350px] h-[350px] bg-indigo-600 opacity-20 blur-[150px]"
         animate={{ x: [0, 20, -20, 0], y: [0, -15, 15, 0] }}
         transition={{ duration: 12, repeat: Infinity }}
       />
+
       <motion.div
         className="absolute bottom-0 right-0 w-[380px] h-[380px] bg-purple-600 opacity-20 blur-[150px]"
         animate={{ x: [0, -20, 20, 0], y: [0, 15, -15, 0] }}
@@ -72,10 +91,9 @@ export default function ReportFound() {
       />
 
       <div className="relative z-10 w-full max-w-5xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden flex flex-col md:flex-row">
-        
-        {/* ======================= LEFT FORM ======================= */}
-        <div className="w-full md:w-1/2 p-10">
 
+        {/* LEFT SIDE */}
+        <div className="w-full md:w-1/2 p-10">
           <h2 className="text-3xl font-bold text-white text-center mb-2">
             Report Found Item
           </h2>
@@ -84,18 +102,17 @@ export default function ReportFound() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            
-            {/* USN */}
+
+            {/* Disabled USN input */}
             <div>
               <label className="block mb-1 text-slate-300 font-medium">Your USN</label>
               <div className="relative">
                 <User2 className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                 <input
                   type="text"
-                  value={usn}
-                  onChange={(e) => setUsn(e.target.value.toUpperCase())}
-                  className="w-full bg-slate-800/40 border border-slate-600 rounded-lg p-3 pl-10 text-white placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 outline-none"
-                  placeholder="4NI23CS167"
+                  value={loggedInUSN}
+                  disabled
+                  className="w-full bg-slate-800/40 border border-slate-600 rounded-lg p-3 pl-10 text-white opacity-70 cursor-not-allowed"
                 />
               </div>
             </div>
@@ -109,7 +126,7 @@ export default function ReportFound() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-800/40 border border-slate-600 rounded-lg p-3 pl-10 text-white placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-slate-800/40 border border-slate-600 rounded-lg p-3 pl-10 text-white"
                   placeholder="Eg. Mobile Phone, Wallet"
                 />
               </div>
@@ -124,7 +141,7 @@ export default function ReportFound() {
                   rows={4}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-slate-800/40 border border-slate-600 rounded-lg p-3 pl-10 text-white placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-slate-800/40 border border-slate-600 rounded-lg p-3 pl-10 text-white"
                   placeholder="Describe where you found it, color, brand, etc."
                 />
               </div>
@@ -134,43 +151,29 @@ export default function ReportFound() {
             {error && <p className="text-red-400 text-sm">{error}</p>}
             {success && <p className="text-green-400 text-sm">{success}</p>}
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 transition-all py-3 rounded-lg text-white font-semibold shadow-lg flex items-center justify-center"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg text-white font-semibold flex items-center justify-center"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Submit"}
             </button>
+
           </form>
         </div>
 
-        {/* ======================= RIGHT SIDE IMAGE ======================= */}
+        {/* RIGHT SIDE */}
         <div className="hidden md:flex w-1/2 bg-gradient-to-br from-indigo-900/30 to-slate-800/10 p-10 items-center justify-center">
           <div className="text-center">
-
             <img
               src="/found.jpg"
               alt="Found Illustration"
               className="w-[150%] mx-auto drop-shadow-2xl"
             />
-
             <h3 className="text-xl font-semibold text-indigo-300 mt-6">
               Help Return Belongings
             </h3>
-
-            <div className="flex justify-center gap-4 mt-4">
-              <span className="px-4 py-1 rounded-full bg-white/10 border border-indigo-400 text-indigo-200 text-sm">
-                Campus Verified
-              </span>
-              <span className="px-4 py-1 rounded-full bg-white/10 border border-green-400 text-green-200 text-sm">
-                Quick Process
-              </span>
-              <span className="px-4 py-1 rounded-full bg-white/10 border border-purple-400 text-purple-200 text-sm">
-                Secure
-              </span>
-            </div>
-
           </div>
         </div>
 
