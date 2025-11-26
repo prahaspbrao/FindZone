@@ -1,16 +1,17 @@
-export const runtime = "nodejs";   // ⭐ REQUIRED FOR NODEMAILER ⭐
+export const runtime = "nodejs"; // ⭐ REQUIRED FOR NODEMAILER ⭐
 
-import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
-import { randomInt } from 'crypto';
-import prisma from '../../../../lib/db';
-import { cookies } from 'next/headers';
+import { NextResponse } from "next/server";
+import prisma from "../../../../lib/db";
+import nodemailer from "nodemailer";
+import { randomInt } from "crypto";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   try {
     const cookieStore = cookies();
-    const loggedInUserId = Number(cookieStore.get("userId")?.value);
-    const loggedInEmail = cookieStore.get("email")?.value;
+
+    const loggedInUserId = Number((await cookieStore).get("userId")?.value);
+    const loggedInEmail = (await cookieStore).get("email")?.value;
 
     if (!loggedInUserId || !loggedInEmail) {
       return NextResponse.json(
@@ -23,12 +24,12 @@ export async function POST(req: Request) {
 
     if (!itemId) {
       return NextResponse.json(
-        { success: false, message: "Item ID is required." },
+        { success: false, message: "Item ID is required" },
         { status: 400 }
       );
     }
 
-    // Fetch item with creator info
+    // Fetch the item
     const item = await prisma.item.findUnique({
       where: { id: Number(itemId) },
       select: { userId: true }
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ❌ BLOCK CREATOR from requesting OTP
+    // ❌ BLOCK CREATOR
     if (item.userId === loggedInUserId) {
       return NextResponse.json(
         {
@@ -54,44 +55,37 @@ export async function POST(req: Request) {
 
     // Generate OTP
     const otp = randomInt(100000, 999999).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-    // Store OTP in DB (recommended)
+    // Save OTP in DB
     await prisma.otp.create({
-  data: {
-    email: loggedInEmail,
-    code: otpCode,
-    expiresAt,
-    used: false,
-    itemId: Number(itemId),
-  },
-});
+      data: {
+        email: loggedInEmail,
+        code: otp,
+        expiresAt,
+        used: false,
+        itemId: Number(itemId),
+      },
+    });
 
-
-    // Nodemailer transporter
+    // Email sender
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
     });
 
-    // Email content
     const mailOptions = {
-      from: `"Lost & Found System" <${process.env.EMAIL_USER}>`,
-      to: loggedInEmail,  // ⭐ OTP goes to the user who clicked verify
-      subject: 'OTP Verification for Item Return',
+      from: `"FindZone" <${process.env.EMAIL_USER}>`,
+      to: loggedInEmail,
+      subject: "OTP Verification Code",
       html: `
-        <div style="font-family: Arial, sans-serif; padding: 10px;">
-          <h2>OTP Verification</h2>
-          <p>Hello User,</p>
-          <p>You requested to verify the return of item #${itemId}.</p>
-          <p><strong>Your OTP is:
-          <span style="color: #2e86de;">${otp}</span></strong></p>
-          <p>This OTP is valid for 5 minutes.</p>
-          <br />
-          <p>Thank you,<br />Lost & Found Team</p>
-        </div>
+        <h2>Your OTP Code</h2>
+        <p>The OTP to verify item <strong>#${itemId}</strong> is:</p>
+        <h1 style="color:#4F46E5">${otp}</h1>
+        <p>This OTP expires in 5 minutes.</p>
       `,
     };
 
@@ -99,14 +93,14 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "OTP sent to your email.",
-      email: loggedInEmail
+      email: loggedInEmail,
+      message: "OTP sent successfully",
     });
 
   } catch (error) {
-    console.error("Error sending OTP:", error);
+    console.error("SEND OTP ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to send OTP." },
+      { success: false, message: "Server error" },
       { status: 500 }
     );
   }
