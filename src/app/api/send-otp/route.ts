@@ -1,5 +1,3 @@
-export const runtime = "nodejs"; // ⭐ REQUIRED FOR NODEMAILER ⭐
-
 import { NextResponse } from "next/server";
 import prisma from "../../../../lib/db";
 import nodemailer from "nodemailer";
@@ -8,12 +6,11 @@ import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
 
-    const loggedInUserId = Number((await cookieStore).get("userId")?.value);
-    const loggedInEmail = (await cookieStore).get("email")?.value;
+    const loggedInUserId = Number(cookieStore.get("userId")?.value);
 
-    if (!loggedInUserId || !loggedInEmail) {
+    if (!loggedInUserId) {
       return NextResponse.json(
         { success: false, message: "Unauthorized user" },
         { status: 401 }
@@ -29,10 +26,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // Fetch the item
+    // ⭐ Fetch item AND OWNER email
     const item = await prisma.item.findUnique({
       where: { id: Number(itemId) },
-      select: { userId: true }
+      select: {
+        userId: true,
+        user: {
+          select: { email: true }
+        }
+      }
     });
 
     if (!item) {
@@ -42,25 +44,25 @@ export async function POST(req: Request) {
       );
     }
 
-    // ❌ BLOCK CREATOR
+    // ❌ Block creator from verifying own item
     if (item.userId === loggedInUserId) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "You cannot request OTP for your own reported item."
-        },
+        { success: false, message: "You cannot verify your own item." },
         { status: 403 }
       );
     }
 
+    // ⭐ Email of the person who posted the item
+    const ownerEmail = item.user.email;
+
     // Generate OTP
     const otp = randomInt(100000, 999999).toString();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    // Save OTP in DB
+    // Save OTP for ITEM OWNER (not requester)
     await prisma.otp.create({
       data: {
-        email: loggedInEmail,
+        email: ownerEmail,
         code: otp,
         expiresAt,
         used: false,
@@ -68,7 +70,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // Email sender
+    // Nodemailer
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -77,24 +79,21 @@ export async function POST(req: Request) {
       },
     });
 
-    const mailOptions = {
+    await transporter.sendMail({
       from: `"FindZone" <${process.env.EMAIL_USER}>`,
-      to: loggedInEmail,
-      subject: "OTP Verification Code",
+      to: ownerEmail,        // ⭐ Send to item owner
+      subject: "OTP to verify your item",
       html: `
-        <h2>Your OTP Code</h2>
-        <p>The OTP to verify item <strong>#${itemId}</strong> is:</p>
-        <h1 style="color:#4F46E5">${otp}</h1>
-        <p>This OTP expires in 5 minutes.</p>
+        <h2>OTP for Item #${itemId}</h2>
+        <h1 style="color: #4F46E5">${otp}</h1>
+        <p>This OTP is valid for 5 minutes.</p>
       `,
-    };
-
-    await transporter.sendMail(mailOptions);
+    });
 
     return NextResponse.json({
       success: true,
-      email: loggedInEmail,
-      message: "OTP sent successfully",
+      email: ownerEmail,     // ⭐ Return owner's email
+      message: "OTP sent to item owner",
     });
 
   } catch (error) {

@@ -11,36 +11,39 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e: { preventDefault: () => void; }) => {
+  e.preventDefault();
 
-    if (!usn || !dob) {
-      toast.error("Please enter USN and Date of Birth");
-      return;
+  if (!usn || !dob) {
+    toast.error("Please enter USN and Date of Birth");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usn, dob }),
+      credentials: "include", // ⭐ MUST HAVE ⭐
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      toast.success("Login successful!");
+      router.push("/dashboard");
+    } else {
+      toast.error(data.message || "Invalid credentials");
     }
+  } catch (err) {
+    toast.error("Server error. Try again.");
+  }
 
-    setLoading(true);
+  setLoading(false);
+};
 
-    try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usn, dob }),
-      });
-
-      if (res.ok) {
-        toast.success("Login successful!");
-        router.push("/dashboard");
-      } else {
-        const data = await res.json();
-        toast.error(data.message || "Invalid credentials");
-      }
-    } catch (err) {
-      toast.error("Server error. Try again.");
-    }
-
-    setLoading(false);
-  };
 
   return (
     <div className="w-full flex items-center justify-center p-4 bg-slate-900 min-h-screen">
