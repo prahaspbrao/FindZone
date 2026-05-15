@@ -232,7 +232,9 @@ export default function SearchItemsPage() {
                   maxLength={1}
                   inputMode="numeric"
                   value={digit}
-                  ref={(el) => (inputRefs.current[idx] = el)}
+                  ref={(el) => {
+  inputRefs.current[idx] = el;
+}}
                   onChange={(e) => {
                     const val = e.target.value;
                     if (!/^\d?$/.test(val)) return;
