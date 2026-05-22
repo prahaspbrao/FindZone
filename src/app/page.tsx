@@ -133,7 +133,7 @@ export default function WelcomePage() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 1.2 }}
         >
-          Find Zone
+          Lost & Found
         </motion.h1>
 
         <motion.p
