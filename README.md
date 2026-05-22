@@ -1,36 +1,46 @@
-# 🧭 Lost and Found System
+# 🧭 FindZone — Campus Lost & Found System
 
-A full-stack **Lost and Found Management System** built as part of a DBMS mini project using **Next.js**, **MySQL**, and **Prisma**. This system helps students efficiently report and find lost or found items on campus, with OTP-based item verification.
-
----
-
-## 📌 Features
-
-- 🔐 Student login and registration using **USN and Date of Birth**
-- 📝 Report **lost or found items**
-- 🔍 **Search** for lost items by name, category, or description
-- 📬 OTP-based **verification via email** before returning items
-- 🗂️ **My Reports** dashboard to manage submitted items
-- 🎨 Modern, responsive UI using **Tailwind CSS** and **shadcn/ui**
+A full-stack **Lost and Found Management System** built as part of a DBMS mini project using **Next.js**, **MySQL**, and **Prisma**.  
+FindZone helps students efficiently report, search, and recover lost or found items on campus with secure OTP-based verification.
 
 ---
 
-## ⚙️ Tech Stack
+## 🚀 Features
 
-| Layer         | Technology                  |
-|---------------|-----------------------------|
-| Frontend      | Next.js (App Router)        |
-| Styling       | Tailwind CSS, shadcn/ui     |
-| Backend       | Node.js with Next.js API    |
-| Database      | MySQL with Prisma ORM       |
-| Email Service | Nodemailer + Gmail SMTP     |
-| Deployment    | Vercel (frontend), Railway/XRender (optional backend)
+- 🔐 Student authentication using **USN and Date of Birth**
+- 📝 Report **Lost** and **Found** items
+- 🔍 Smart item search by:
+  - Item name
+  - Category
+  - Description
+- 📬 OTP-based item return verification via email
+- 🗂️ Personalized **My Reports** dashboard
+- 🎨 Responsive modern UI using **Tailwind CSS** and **shadcn/ui**
+- 🐳 Fully **Dockerized** application
+- ⚡ Automated **CI/CD pipeline** using **GitHub Actions**
+- ☁️ Ready for cloud deployment
 
 ---
 
-## 🏁 Getting Started
+## 🛠️ Tech Stack
 
-### 1. Clone the Repository
+| Layer         | Technology |
+|---------------|------------|
+| Frontend      | Next.js (App Router) |
+| Styling       | Tailwind CSS, shadcn/ui |
+| Backend       | Node.js with Next.js API Routes |
+| Database      | MySQL + Prisma ORM |
+| Authentication| USN + DOB based login |
+| Email Service | Nodemailer + Gmail SMTP |
+| DevOps        | Docker, GitHub Actions |
+| Deployment    | Vercel / Railway / Render |
+
+---
+
+## 🐳 Docker Support
+
+The project is fully containerized using Docker.
+
+### Build Docker Image
 ```bash
-git clone https://github.com/your-username/DBMS-project.git
-cd DBMS-project
+docker build -t findzone .
